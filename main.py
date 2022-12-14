@@ -253,6 +253,27 @@ def deleteById():
         print(e)
         logging.error('Delete report by id ',e)
 
+def repassword():
+    try:
+
+        sql = """SELECT id FROM user WHERE uname=?"""
+        res = cur.execute(sql, (user,))
+        df = pd.DataFrame(res)
+        userid = df[0][0]
+        userid =str(userid)
+        # print(f'userid : {userid}')
+        new_pass = getpass.getpass('Input new password :')
+        password = hashlib.sha256(new_pass.encode()).hexdigest()
+        ct = input('Chang password ?(y/n) :')
+        if ct == 'y':
+            sql = "UPDATE user SET password=? WHERE id=?"
+            cur.execute(sql,(password, userid,))
+            con.commit()
+            print(f'{user} Change Password Successful')
+            logging.debug(f'Chang password user {user}')
+    except Exception as e:
+        print(e)
+
 def deleteAll():
     try :
         ans = input('Delete All Data ? (y/n)')
@@ -292,11 +313,13 @@ while userlogin:
         elif menuRead == '3':
            readFromLast()
     elif menu1 == '3':
-        menu2 = input('(1)Delete Report (2)Add User (x)Exit :').lower()
+        menu2 = input('(1)Delete Report (2)Add User (3)Change Password (x)Exit :').lower()
         if menu2 == '1':
             deleteById()
         elif menu2 == '2':
             insertUser()
+        elif menu2 == '3':
+            repassword()
         elif menu2 == 'x':
             exit()
         else:
