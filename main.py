@@ -74,7 +74,7 @@ def insertUserDB(fname, lname, email, position, uname, password):
         print(e)
 
 def insertUser():
-    print('Add New User.')
+    print('Add New User. \n')
     fname = input('First name: ')
     lname = input('Last name: ')
     email = input('Email : ')
@@ -129,7 +129,7 @@ num_login = 0
 def login():
     global user
     global num_login
-    print('Wellcome to your report Please Login')
+    # print('Wellcome to your report Please Login \n')
     user = input('Username: ')
     password = getpass.getpass('Password: ')    # pycharm can't run getpass
     # password = input('Password: ')
@@ -139,7 +139,7 @@ def login():
         print('Your in')
         return True
     else:
-        print("It's Wrong!! Try Again")
+        print("It's Wrong!! Try Again \n")
         num_login += 1
         if num_login >= 3 :
             exit()
@@ -180,7 +180,7 @@ def readFromDate():
 def readFromLast():
     sql = "SELECT * FROM report WHERE uname=? ORDER BY ROWID DESC"
     res = cur.execute(sql,(user,))
-    num_row = input('How many row ? :')
+    num_row = input('How many row ? : ')
     if num_row == '':
         num_row = 5
     print(f'Show {num_row} by last time')
@@ -225,7 +225,7 @@ def exportToExcel(df):
 
         filename = f"{ddate}_{fileInputName}.xlsx"
         df.to_excel(filename, index=False)
-        print(f"Successfull {filename} By {user}")
+        print(f"Successfull {filename} By {user} \n")
         logging.debug(f'Create {filename} By {user}')
 
     except Exception as e:
@@ -298,9 +298,10 @@ except:
     insertUser()
     creatTable_report()
 
-userlogin = login()
+# userlogin = login()
+login()
 
-while userlogin:
+while True:
     menu1 = input('(1)Write report (2)Read Report (3)Other (x)Exit :').lower()
     if menu1 == '1':
         insert()
