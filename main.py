@@ -80,8 +80,8 @@ def insertUser():
     email = input('Email : ')
     position = input('Position: ')
     uname = input('Login name: ')
-    password = input('Password: ')
-    # password = getpass.getpass('Password: ')    # pycharm can't run getpass
+    #password = input('Password: ')
+    password = getpass.getpass('Password: ')    # pycharm can't run getpass
     password = hashlib.sha256(password.encode()).hexdigest()
     insertUserDB(fname, lname, email, position, uname, password)
 
@@ -122,15 +122,17 @@ def insert():
     except Exception as e:
         print(e)
         logging.error(e)
+
 global num_login
 num_login = 0
+
 def login():
     global user
     global num_login
     print('Wellcome to your report Please Login')
     user = input('Username: ')
-    # password = getpass.getpass('Password: ')    # pycharm can't run getpass
-    password = input('Password: ')
+    password = getpass.getpass('Password: ')    # pycharm can't run getpass
+    # password = input('Password: ')
     password = hashlib.sha256(password.encode()).hexdigest()
     cur.execute("SELECT * FROM user WHERE uname=? AND password=?",(user,password))
     if cur.fetchall():
@@ -144,12 +146,20 @@ def login():
         login()
 
 def readAllDb():
-    sql = """SELECT * FROM report WHERE uname=?"""
-    res = cur.execute(sql, user)
-    # for row in res:
-    #     print(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],'\n')
-    df = pd.DataFrame(res, columns=['id','date','time','topic','detail','result','commander','assistant','User'], index=None)
-    print(df)
+    try:
+        sql = """SELECT * FROM report WHERE uname=?"""
+        res = cur.execute(sql, (user,))
+        # for row in res:
+        #     print(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],'\n')
+        df = pd.DataFrame(res, columns=['id','date','time','topic','detail','result','commander','assistant','User'])
+        print(df)
+        ct = input('Save to Excel (y/n) ? ').lower()
+        if ct == 'y':
+            exportToExcel(df)
+        else:
+            pass
+    except Exception as e:
+        print(e)
 
 def readFromDate():
     dt = datetime.now()
@@ -157,52 +167,91 @@ def readFromDate():
     ddate = input('Date yyyy-mm-dd: ')
     if ddate == '':
         ddate = ddate1
-    sql = "SELECT * FROM report WHERE date=?"
-    res = cur.execute(sql,(ddate,))
-    for row in res:
-        print(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7])
+    sql = "SELECT * FROM report WHERE date=? AND uname=?"
+    res = cur.execute(sql,(ddate,user,))
+    df = pd.DataFrame(res, columns=['id','date','time','topic','detail','result','commander','assistant','User'])
+    print(df)
+    ct = input('Save to Excel (y/n) ? ').lower()
+    if ct == 'y':
+        exportToExcel(df)
+    else:
+        pass
 
 def readFromLast():
-    sql = "SELECT * FROM report ORDER BY ROWID DESC"
-    res = cur.execute(sql)
-    num_row = 20
+    sql = "SELECT * FROM report WHERE uname=? ORDER BY ROWID DESC"
+    res = cur.execute(sql,(user,))
+    num_row = input('How many row ? :')
+    if num_row == '':
+        num_row = 5
     print(f'Show {num_row} by last time')
-    for row in res.fetchmany(num_row):
-        print(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7])
+    df = pd.DataFrame(res, columns=['id','date','time','topic','detail','result','commander','assistant','User'])
+    print(df)
+    ct = input('Save to Excel (y/n) ? ').lower()
+    if ct == 'y':
+        exportToExcel(df)
+    else:
+        pass
+#def readFromDayToexcel():
+#    try:
+#        dt = datetime.now()
+#        ddate1 = dt.strftime("%Y-%m-%d")
+#        ddate = input('Date yyyy-mm-dd: ')
+#        if ddate == '':
+#            ddate = ddate1
+#        sql = "SELECT date,time,topic,detail,result,commander,assistant FROM report WHERE date=?"
+#        res = cur.execute(sql,(ddate,))
+#        df = pd.DataFrame(res, columns=['date','time','topic','detail','result','commander','assistant'])
+#        print(df)
+#        ct = input('Save to Excel (y/n) ? ')
+#        if ct == 'y':
+#            filename = f"{ddate}_{username}.xlsx"
+#            df.to_excel(filename, index=False)
+#            print(df)
+#            print(f"Successfull {filename}")
+#            logging.debug(f'Create {filename}')
+#
+#    except Exception as e:
+#        logging.error(e)
+#        print(e)
 
-def readFromDayToexcel():
+def exportToExcel(df):
     try:
         dt = datetime.now()
-        ddate1 = dt.strftime("%Y-%m-%d")
-        ddate = input('Date yyyy-mm-dd: ')
-        if ddate == '':
-            ddate = ddate1
-        sql = "SELECT date,time,topic,detail,result,commander,assistant FROM report WHERE date=?"
-        res = cur.execute(sql,(ddate,))
-        df = pd.DataFrame(res, columns=['date','time','topic','detail','result','commander','assistant'])
-        print(df)
-        ct = input('Save to Excel (y/n) ? ')
-        if ct == 'y':
-            filename = f"{ddate}_{username}.xlsx"
-            df.to_excel(filename, index=False)
-            print(df)
-            print(f"Successfull {filename}")
-            logging.debug(f'Create {filename}')
+        ddate = dt.strftime("%Y-%m-%d")
+        ttime1 = dt.strftime("%H:%M:%S")
+        fileInputName= input('File name : ')
+        if fileInputName == '':
+            fileInputName = ttime1
+
+        filename = f"{ddate}_{fileInputName}.xlsx"
+        df.to_excel(filename, index=False)
+        print(f"Successfull {filename} By {user}")
+        logging.debug(f'Create {filename} By {user}')
 
     except Exception as e:
         logging.error(e)
         print(e)
 def deleteById():
     try :
-        id = input('Input id row: ')
-        sql = 'DELETE FROM report WHERE id=?'
-        cur.execute(sql,(id,))
-        con.commit()
-        logging.debug(f'Delete id:{id} By {user}')
-        print('Deleted')
+        id = input('Input id row for delete : ')
+        read = "SELECT * FROM report WHERE id=?"
+        # cur.execute(read,(id,))# for row in res:
+        res = cur.execute(read,(id))
+        df = pd.DataFrame(res, columns=['id','date','time','topic','detail','result','commander','assistant','User'])
+        print(df)
+        ct = input('Delete this report ? (y/n):')
+        if ct == 'y':
+            sql = 'DELETE FROM report WHERE id=?'
+            cur.execute(sql,(id,))
+            con.commit()
+            logging.debug(f'Delete report id:{id} By {user}')
+            print(f'id:{id} Deleted')
+        else:
+            print(f'Not Delete this report ')
+
     except Exception as e:
         print(e)
-        logging.error('Delete by id ',e)
+        logging.error('Delete report by id ',e)
 
 def deleteAll():
     try :
@@ -218,6 +267,7 @@ def deleteAll():
         print(e)
         logging.error('delete all ',e)
 
+#-------------- Check first time and Create table ------------------
 try:
     res = cur.execute("SELECT id FROM user")
     # print(res)
